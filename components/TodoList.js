@@ -1,57 +1,64 @@
-import React from 'react';
-import TodoItem from './TodoItem';
+import React from 'react'
+import axios from 'axios'
+import TodoItem from './TodoItem'
 import {
-	StyleSheet,
-	Text,
-	View,
-	Alert,
-	FlatList } from 'react-native';
+  StyleSheet,
+  Text,
+  View,
+  Alert,
+  ScrollView } from 'react-native'
 
-export default class App extends React.Component {
+export default class TodoList extends React.Component {
+  constructor (props) {
+    super(props)
+    this.removeTodo = this.removeTodo.bind(this)
+    this.markTodo = this.markTodo.bind(this)
+  }
 
-	constructor(props) {
-		super(props)
+  removeTodo (id) {
+    // Alert.alert(String(id),JSON.stringify(this.props))
+    this.props.data.splice(id, 1)
+    this.props.reset()
+    axios.delete(`${this.props.baseURL}/${id}`)
+  }
 
-		this.state = {
-			todos: this.props.data
-		}
-	}
+  markTodo (id) {
+    this.props.data[id].isDone = !this.props.data[id].isDone
+    this.props.reset()
+    this.forceUpdate()
+    // Alert.alert(String(id),JSON.stringify(this.props))
+    axios.put(`${this.props.baseURL}/${id}`, this.props.data[id])
+  }
 
-	// async componentWillMount() {
-	// 	try {
-	// 	  const data = await AsyncStorage.getItem('@');
-	// 	  if (data !== null){
-	// 	    this.setState({
-	// 	    	todos: JSON.parse(data)
-	// 	    })
-	// 	  }
-	// 	} catch (err) {
-	// 		this.setState({
-	// 			todos: []
-	// 		})
-	// 	}
-	// }
+  render () {
+    // Alert.alert('', JSON.stringify(this.props.data))
+    return (
+      <View>
+        <ScrollView style={styles.container}>
+          {this.props.data
+            .sort((a, b) => a._id - b._id)
+            .map((item, id) => (<TodoItem 
+              reset={this.props.reset}
+              data={this.props.data}
 
-	addTodo() {}
-
-	render() {
-		// Alert.alert('',JSON.stringify(this.state.todos))
-    	return (
-    	  <View>
-    	  	<FlatList style={styles.container}
-				data={this.state.todos}
-				renderItem={({item}) => <TodoItem key={Math.random()} title={item.title} text={item.text} date={item.date} img={item.img} />}
-			/>
-    	  </View>
-    );
+              key={Math.random()} 
+              id={item._id} 
+              content={item.content} 
+              done={item.isDone} 
+              date={item.date || 'timeless'} 
+              removeTodo={id => this.removeTodo(id)} 
+              markTodo={this.markTodo} 
+            />)
+          )}
+            </ScrollView>
+      </View>
+    )
   }
 }
 
 const styles = StyleSheet.create({
   container: {
-  	width: '100%',
-  	display: 'flex',
-  	alignContent: 'space-between',
-  	paddingTop: 15
-  },
-});
+    alignContent: 'space-between',
+    paddingTop: 15
+  }
+})
